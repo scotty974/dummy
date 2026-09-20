@@ -27,19 +27,44 @@ def ingest_dummy_products():
             path = f"/opt/airflow/data/bronze/products_{ds}.json"
             Path(path).parent.mkdir(parents=True, exist_ok=True)
             Path(path).write_text(json.dumps(r))
-            return path
+            return {"path":path, "variable":"products"}
         except requests.exceptions.RequestException as e:
             raise SystemExit(e)
         
-        
-    @task()
-    def ingest_db(path:str):
-        hook = PostgresHook(postgres_conn_id="warehouse_dummy")
-        data = Path(path).read_text()
-        
-        print(data)
     
-
-    create_bronze >> ingest_db(get_products())
+    @task
+    def ingest_data(products):
+        data = json.loads(Path(products["path"]).read_text(encoding="utf-8"))
+        hook = PostgresHook(
+            postgres_conn_id="warehouse_dummy"
+        ) 
+        records = data["products"]
+        
+        try:
+           rows =[
+               (
+                   products["variable"],
+                   json.dumps(record, ensure_ascii=False)
+               )
+               for record in records
+           ]
+           
+           hook.insert_rows(
+               table="bronze_products",
+               rows=rows,
+               target_fields=[
+                   "type",
+                   "content"
+               ],
+               commit_every=1000,
+           )
+           return f"{len(rows)} produits insérés"
+        except Exception as e:
+            return 1
+        
+    _get_products = get_products()
+    ingest_task = ingest_data(_get_products)
+    
+    create_bronze >> ingest_task
 
 ingest_dummy_products()
