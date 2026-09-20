@@ -8,11 +8,10 @@ import datetime
 CONN_ID = "warehouse_dummy"
 SQL_DIR = Path(__file__).parent / "sql" / "quality"
 REJECT_THRESHOLD = 0.05
+import pendulum
 
-
-@dag(
-    start_date=datetime.datetime(2021, 1, 1, tzinfo=datetime.timezone.utc),
-    schedule="@daily",
+@dag(start_date=pendulum.datetime(2021, 1, 1, tz="Europe/Paris"),
+    schedule="0 6 * * *",
     catchup=False,
     max_active_runs=1,
 )

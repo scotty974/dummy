@@ -7,10 +7,10 @@ import datetime
 from pathlib import Path
 import json
 from datetime import timedelta
+import pendulum
 
-
-
-@dag(start_date=datetime.datetime(2021,1,1),schedule="@daily")
+@dag(start_date=pendulum.datetime(2021, 1, 1, tz="Europe/Paris"),
+    schedule="0 6 * * *",)
 def ingest_dummy_products():
     
     create_bronze = SQLExecuteQueryOperator(
