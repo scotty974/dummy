@@ -37,3 +37,24 @@ CREATE TABLE IF NOT EXISTS silver_cart_items (
     transformed_at        TIMESTAMPTZ DEFAULT now(),
     PRIMARY KEY (cart_id, product_id)               
 );
+
+CREATE TABLE IF NOT EXISTS quality_check_log (
+    id            BIGSERIAL PRIMARY KEY,
+    run_id        TEXT NOT NULL,
+    target_table  TEXT NOT NULL,
+    rule_name     TEXT NOT NULL,
+    severity      TEXT NOT NULL,
+    entity_key    TEXT,
+    details       TEXT,
+    checked_at    TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS quality_rejects (
+    id            BIGSERIAL PRIMARY KEY,
+    run_id        TEXT NOT NULL,
+    target_table  TEXT NOT NULL,
+    rule_name     TEXT NOT NULL,
+    entity_key    TEXT,
+    details       TEXT,
+    rejected_at   TIMESTAMPTZ DEFAULT now()
+);
