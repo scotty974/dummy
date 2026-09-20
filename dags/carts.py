@@ -6,6 +6,7 @@ from utils.get_data import get_data_from_api
 import datetime
 import json
 from pathlib import Path
+from datetime import timedelta
 
 @dag(start_date=datetime.datetime(2021,1,1), schedule="@daily")
 def ingest_dummy_carts():
@@ -20,7 +21,9 @@ def ingest_dummy_carts():
     get_carts = PythonOperator(
         task_id="fetch_carts",
         python_callable=get_data_from_api,
-        op_kwargs={"variable_name":"api_dummy_carts","type":"carts", "run":"{{run_id}}"}
+        op_kwargs={"variable_name":"api_dummy_carts","type":"carts", "run":"{{run_id}}"},
+        retries=3,
+        retry_delay=timedelta(minutes=5),
     )
     
     @task
@@ -34,6 +37,7 @@ def ingest_dummy_carts():
             ]
            
         hook = PostgresHook(postgres_conn_id="warehouse_dummy")
+        # TODO - AJout d'un check si les product_id existe deja dans la db
         hook.insert_rows(
         table="bronze_carts",
         rows=rows,

@@ -6,6 +6,7 @@ from utils.get_data import get_data_from_api
 import datetime
 from pathlib import Path
 import json
+from datetime import timedelta
 
 
 
@@ -21,7 +22,9 @@ def ingest_dummy_products():
     get_products = PythonOperator(
         task_id="fetch_products",
         python_callable=get_data_from_api,
-        op_kwargs={'variable_name':"api_dummy_products", 'type':"products", 'run':'{{run_id}}'}
+        op_kwargs={'variable_name':"api_dummy_products", 'type':"products", 'run':'{{run_id}}'},
+        retries=3,
+        retry_delay=timedelta(minutes=5),
     )
         
     
