@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS bronze_products (
-    id SERIAL PRIMARY KEY,
-    type TEXT,
-    content JSONB
+    product_id BIGINT PRIMARY KEY,
+    content JSONB NOT NULL,
+    loaded_at TIMESTAMP DEFAULT now()
 );

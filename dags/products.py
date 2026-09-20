@@ -5,6 +5,7 @@ import datetime
 import requests
 from pathlib import Path
 import json
+from psycopg2.extras import execute_values
 
 
 
@@ -35,36 +36,27 @@ def ingest_dummy_products():
     @task
     def ingest_data(products):
         data = json.loads(Path(products["path"]).read_text(encoding="utf-8"))
-        hook = PostgresHook(
-            postgres_conn_id="warehouse_dummy"
-        ) 
         records = data["products"]
         
-        try:
-           rows =[
-               (
-                   products["variable"],
-                   json.dumps(record, ensure_ascii=False)
-               )
-               for record in records
-           ]
+        rows = [
+                (record["id"], json.dumps(record, ensure_ascii=False))
+                for record in records
+            ]
            
-           hook.insert_rows(
-               table="bronze_products",
-               rows=rows,
-               target_fields=[
-                   "type",
-                   "content"
-               ],
-               commit_every=1000,
-           )
-           return f"{len(rows)} produits insérés"
-        except Exception as e:
-            return 1
+        hook = PostgresHook(postgres_conn_id="warehouse_dummy")
+        hook.insert_rows(
+        table="bronze_products",
+        rows=rows,
+        target_fields=["product_id", "content"],
+        commit_every=1000,
+        replace=True,
+        replace_index="product_id", 
+        )
+        return f"{len(rows)} produits traites"
         
     _get_products = get_products()
     ingest_task = ingest_data(_get_products)
     
-    create_bronze >> ingest_task
+    create_bronze >> _get_products >> ingest_task
 
 ingest_dummy_products()
